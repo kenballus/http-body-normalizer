@@ -1,6 +1,5 @@
-from enum import Enum
 import re
-from typing import Final
+from typing import Final, TypeGuard
 
 #  quoted-string  = DQUOTE *( qdtext / quoted-pair ) DQUOTE
 #  qdtext         = HTAB / SP / %x21 / %x23-5B / %x5D-7E / obs-text
@@ -31,29 +30,77 @@ _PARAMETER_RE: Final[str] = rf"[ \t]*;[ \t]*(?:({_TOKEN_RE})=({_PARAMETER_VALUE_
 
 _PARAMETERS_RE: Final[str] = rf"(?:{_PARAMETER_RE})*"
 
-_MEDIA_TYPE_RE: Final[str] = rf"(?P<type>{_TOKEN_RE})/(?P<subtype>{_TOKEN_RE})(?P<parameters>{_PARAMETERS_RE})"
+_MEDIA_TYPE_RE: Final[str] = (
+    rf"(?P<type>{_TOKEN_RE})/(?P<subtype>{_TOKEN_RE})(?P<parameters>{_PARAMETERS_RE})"
+)
 
 _PARAMETER_PAT: Final[re.Pattern[bytes]] = re.compile(_PARAMETER_RE.encode("ascii"))
 _MEDIA_TYPE_PAT: Final[re.Pattern[bytes]] = re.compile(_MEDIA_TYPE_RE.encode("ascii"))
+
+
+def is_bytes_list(l: list) -> TypeGuard[list[bytes]]:
+    return all(isinstance(thing, bytes) for thing in l)
+
+
+_MAX_CONTINUATION_INDEX: Final[int] = 100  # Picked arbitrarily. Feel free to increase if necessary.
+
 
 def parse_media_type(media_type: bytes) -> tuple[bytes, bytes, list[tuple[bytes, bytes]]]:
     """
     Takes as input the value of a Content-Type header.
     Spits out the type, subtype, and a list of key:value pairs corresponding to the parameters.
     """
-    
+
     m: re.Match[bytes] | None = re.fullmatch(_MEDIA_TYPE_PAT, media_type)
     if m is None:
-        raise ValueError
+        raise ValueError("Media type does not parse!")
 
+    type_: bytes = m["type"]
+    subtype: bytes = m["subtype"]
     parameter_bytes: bytes = m["parameters"]
 
-    params: list[tuple[bytes, bytes]] = []
+    raw_params: list[tuple[bytes, bytes]] = []
     while len(parameter_bytes) > 0:
-        param: re.Match[bytes] | None = re.match(_PARAMETER_PAT, parameter_bytes)
-        if param is None:
-            raise ValueError
-        params.append((param[1], param[2]))
-        parameter_bytes = parameter_bytes[param.end():]
+        m = re.match(_PARAMETER_PAT, parameter_bytes)
+        assert m is not None
+        raw_params.append((m[1], m[2]))
+        parameter_bytes = parameter_bytes[m.end() :]
 
-    return m["type"], m["subtype"], params
+    # Parse RFC 2231-style continuations in parameters.
+    params_with_continuation: dict[bytes, list[bytes | None] | bytes] = {}
+    for raw_key, raw_value in raw_params:
+        # Note: RFC 2231 requires that the first digit be nonzero. We relax this on the input side, but not on the output side.
+        m = re.fullmatch(rb"\A(?P<key>.*)\*(?P<index>\d+)\Z", raw_key)
+        if m is not None:
+            key: bytes = m["key"]
+            index: int = int(m["index"])
+
+            if key not in params_with_continuation:
+                params_with_continuation[key] = []
+
+            values: list[bytes | None] | bytes = params_with_continuation[key]
+            if isinstance(values, bytes):
+                raise ValueError("Duplicate parameter! (once with continuation, once without)")
+            if index > _MAX_CONTINUATION_INDEX:
+                raise ValueError("Continuation index too large!")
+            # Extend the list to match the index, if necessary
+            while len(values) < index + 1:
+                values.append(None)
+            if values[index] is not None:
+                raise ValueError("Repeated continuation index!")
+            values[index] = raw_value
+        else:
+            if raw_key in params_with_continuation:
+                raise ValueError("Duplicate parameter!")
+            params_with_continuation[raw_key] = raw_value
+
+    params: list[tuple[bytes, bytes]] = []
+    for k, v in params_with_continuation.items():
+        if isinstance(v, bytes):
+            params.append((k, v))
+        elif isinstance(v, list):
+            if not is_bytes_list(v):
+                raise ValueError("Missing continuation index!")
+            params.append((k, b"".join(v)))
+
+    return type_, subtype, params
