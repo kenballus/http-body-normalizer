@@ -25,7 +25,7 @@ The proxy should not change the order unless multiple definitions are allowed, s
 - No Whitespace between fieldname and colon e.g. `Content-Type :` - (RFC9112)
 - is a singleton field BUT (RFC9110#section-8.3)
 - it is sometimes incorrectly generated multiple times, resulting in a combined field value that appears to be a list. Recipients often attempt to handle this error by using the last syntactically valid member of the list, leading to potential interoperability and security issues if different implementations have different error handling behaviors.
-
+- If the Content-Type value is any of the multipart/*, boundary parameter is required. - (RFC7578#section-8)
 
 ### Media-Type (RFC9110#section-8.3):
 - type/subtype
@@ -47,3 +47,7 @@ All these are allowed:
 - in the header after content type. if boundary value has ":" or ";" or any weird character you should wrap it in double quotes
 - Boundary delimiters must not appear within the encapsulated material, and must be no longer than 70 characters, not counting the two leading hyphens e.g. `--gc0pJq0M:08jU534c0p`
 
+### Parameter Value Continuation (RFC2231#section-3)
+- definition: asterisk character (*) character followed by a decimal count
+- numbers start from 0 and increment by 1 (decimal values only)
+- leading zeroes nor gaps are allowed
