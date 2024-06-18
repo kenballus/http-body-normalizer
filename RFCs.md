@@ -27,6 +27,10 @@ The proxy should not change the order unless multiple definitions are allowed, s
 - it is sometimes incorrectly generated multiple times, resulting in a combined field value that appears to be a list. Recipients often attempt to handle this error by using the last syntactically valid member of the list, leading to potential interoperability and security issues if different implementations have different error handling behaviors.
 - If the Content-Type value is any of the multipart/*, boundary parameter is required. - (RFC7578#section-8)
 
+#### `Content-Type` header inside a multipart request body (RFC822#section-3.1.4 and the revision of it RFC5322#appendix-B -> 20th item):
+- the rfc822 says whitespace is allowed on either side of the colon
+- but rfc5322 says folding whitespace between fieldname and colon is not allowed!
+
 ### Media-Type (RFC9110#section-8.3):
 - type/subtype
 - both case insensitive!
@@ -51,3 +55,4 @@ All these are allowed:
 - definition: asterisk character (*) character followed by a decimal count
 - numbers start from 0 and increment by 1 (decimal values only)
 - leading zeroes nor gaps are allowed
+
