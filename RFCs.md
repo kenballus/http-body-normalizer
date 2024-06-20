@@ -56,3 +56,45 @@ All these are allowed:
 - numbers start from 0 and increment by 1 (decimal values only)
 - leading zeroes nor gaps are allowed
 
+### Content-Disposition (RFC2183#section-2 and (MDN/HTTP/Headers)[https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition])
+- `multipart/form-data` REQUIRES this header and with the value of `form-data` and MUST have a `name` parameter. other params like `filename` and `filename*` are optional
+```
+Content-Disposition: form-data; name="fieldName"
+Content-Disposition: form-data; name="fieldName"; filename="filename.jpg"
+```
+- values of `Content-Disposition` MUST be only `inline` or `attachment` (should be downloaded) in things except `form-data`.
+- value of filename MUST be put into quotes! But most browsers support non quotes for compatibility
+- Interesting Example. Check RFC
+```
+        Content-Type: multipart/mixed; boundary=outer
+        Content-Description: multipart-1
+
+        --outer
+          Content-Type: text/plain
+          Content-Disposition: inline
+          Content-Description: text-part-1
+
+          Some text goes here
+
+        --outer
+          Content-Type: multipart/mixed; boundary=inner
+          Content-Disposition: attachment
+          Content-Description: multipart-2
+
+          --inner
+            Content-Type: text/plain
+            Content-Disposition: inline
+            Content-Description: text-part-2
+
+            Some more text here.
+
+          --inner
+            Content-Type: image/jpeg
+            Content-Disposition: attachment
+            Content-Description: jpeg-1
+
+            <jpeg data>
+          --inner--
+        --outer--
+```
+
