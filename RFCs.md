@@ -56,7 +56,8 @@ All these are allowed:
 - numbers start from 0 and increment by 1 (decimal values only)
 - leading zeroes nor gaps are allowed
 
-### Content-Disposition (RFC2183#section-2 and (MDN/HTTP/Headers)[https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition])
+### Content-Disposition (RFC2183#section-2 and (MDN/HTTP/Headers)[https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition] and RFC5234)
+- Case insensitive (RFC5234)
 - `multipart/form-data` REQUIRES this header and with the value of `form-data` and MUST have a `name` parameter. other params like `filename` and `filename*` are optional
 ```
 Content-Disposition: form-data; name="fieldName"
@@ -97,4 +98,7 @@ Content-Disposition: form-data; name="fieldName"; filename="filename.jpg"
           --inner--
         --outer--
 ```
+### Content-Transfer-Encoding (RFC7578#Section-4.7)
+- Deprecated
+- Senders SHOULD NOT generate
 
