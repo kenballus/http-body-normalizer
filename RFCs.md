@@ -1,10 +1,8 @@
 ### `Field` Syntax and Parsing
 #### Field Syntax - (RFC9112#section-5):
-
 `field-line   = field-name ":" OWS field-value OWS`
 
 #### Field Line Parsing - (RFC9110#section-5.5):
-
 - Multiple (duplicate) Field Names 
 The get concatinated together.
 The proxy should not change the order unless multiple definitions are allowed, sender MUST NOT do this if not allowed - (RFC9110#section-5.2 and RFC9110#section-5.3)
@@ -41,6 +39,7 @@ All these are allowed:
   text/html; charset="utf-8"
   text/html;charset=UTF-8
 ```
+
 #### Multipart Media-Type (RFC2046#section5-1)
 - No header field is required in the body part
 - header names only that begin with "Content-" have meaning. All other header fields MAY be ignored. Although they SHOULD generally be retained
@@ -56,16 +55,16 @@ All these are allowed:
 - numbers start from 0 and increment by 1 (decimal values only)
 - leading zeroes nor gaps are allowed
 
-### Content-Disposition (RFC2183#section-2 and (MDN/HTTP/Headers)[https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition] and RFC5234)
+### Content-Disposition (RFC2183#section-2 and (MDN/HTTP/Headers)[https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition] and RFC5234 and RFC6266)
 - Case insensitive (RFC5234)
-- `multipart/form-data` REQUIRES this header and with the value of `form-data` and MUST have a `name` parameter. other params like `filename` and `filename*` are optional
+- `multipart/form-data` REQUIRES this header and with the value of `form-data` and MUST have a `name` parameter. other params like `filename` and `filename*` are optional (RFC6266)
 ```
 Content-Disposition: form-data; name="fieldName"
 Content-Disposition: form-data; name="fieldName"; filename="filename.jpg"
 ```
 - values of `Content-Disposition` MUST be only `inline` or `attachment` (should be downloaded) in things except `form-data`.
 - value of filename MUST be put into quotes! But most browsers support non quotes for compatibility
-- Interesting Example. Check RFC
+- Interesting Example about nested boundaries. MUST check (RFC2183#section-3)
 ```
         Content-Type: multipart/mixed; boundary=outer
         Content-Description: multipart-1
