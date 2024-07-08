@@ -259,7 +259,7 @@ class MultipartSubpart:
 
     def __post_init__(self):
         if b"\r\n--" + self.boundary in self.data:
-            raise ValueError(f"Boundary present in multipart data: {self.data}")
+            raise ValueError(f"Boundary present in multipart data: {self.data!r}")
 
     def serialize(self) -> bytes:
         result: bytes = b""
@@ -380,5 +380,3 @@ def parse_multipart_body(boundary: str, data: bytes) -> list[MultipartSubpart]:
 
 def normalize_multipart_body(boundary: str, data: bytes) -> bytes:
     return b"\r\n".join(map(MultipartSubpart.serialize, parse_multipart_body(boundary, data))) + b"\r\n--" + boundary.encode("ascii") + b"--"
-    
-
