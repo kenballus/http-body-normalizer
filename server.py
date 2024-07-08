@@ -14,18 +14,17 @@ async def respond(request) -> aiohttp.web.Response:
     except RequestPayloadError:
         return aiohttp.web.Response(status=400, reason="Bad message body.")
 
+    headers: CIMultiDict = CIMultiDict()
+    headers.extend(request.headers)
+
     if "Content-Type" in request.headers:
         orig_ct: str = request.headers["Content-Type"]
         if not orig_ct.isascii():
             return aiohttp.web.Response(status=400, reason="Non-ASCII bytes in Content-Type.")
         try:
-            new_ct: str = parse_media_type(orig_ct.encode("ascii")).serialize().decode("ascii")
+            headers["Content-Type"] = parse_media_type(orig_ct.encode("ascii")).serialize().decode("ascii")
         except ValueError:
             return aiohttp.web.Response(status=400, reason="Bad Content-Type.")
-
-    headers: CIMultiDict = CIMultiDict()
-    headers.extend(request.headers)
-    headers["Content-Type"] = new_ct
 
     async with aiohttp.ClientSession() as session:
         async with session.request(
