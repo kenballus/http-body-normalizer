@@ -2,11 +2,14 @@ import aiohttp
 import aiohttp.web
 from aiohttp.web_protocol import RequestPayloadError
 from aiohttp.abc import CIMultiDict
+from yarl import URL
 
 from media_type import parse_media_type, normalize_multipart_body, MediaType
 
-# Change me!
-_BACKEND: str = "https://127.0.0.1:8000"
+# Change this:
+_HOST: str = "localhost"
+# And this:
+_PORT: int = 8000
 
 async def respond(request) -> aiohttp.web.Response:
     try:
@@ -26,13 +29,17 @@ async def respond(request) -> aiohttp.web.Response:
         except ValueError:
             return aiohttp.web.Response(status=400, reason="Bad Content-Type.")
 
+    try:
+        url: URL = request.url.with_host(_HOST).with_port(_PORT)
+    except ValueError:
+        return aiohttp.web.Response(status=400, reason="Invalid URL.")
+
     async with aiohttp.ClientSession() as session:
         async with session.request(
             method=request.method,
-            url=request.url,
-            data=body,
+            url=url,
             headers=headers,
-            cookies=request.cookies,
+            data=body,
         ) as response:
             print(response)
             return aiohttp.web.Response(
