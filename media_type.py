@@ -368,7 +368,7 @@ def parse_multipart_body(boundary: str, data: bytes) -> list[MultipartSubpart]:
     raw_subparts[0] = b"\r\n" + raw_subparts[0] # First chunk won't have CRLF prefix, so add one on
     result: list[MultipartSubpart] = []
     for subpart in raw_subparts:
-        if subpart == b"--":
+        if subpart in (b"--", b"--\r\n"):
             break
         if not subpart.startswith(b"\r\n"):
             raise ValueError(f"Missing CRLF in {subpart!r}!")
